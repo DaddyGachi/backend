@@ -14,10 +14,10 @@ export const registerAdminRoutes = (app: FastifyInstance, prisma: PrismaClient):
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Admin'],
-        summary: 'Flag a wallet as suspicious',
+        
+        
         description: 'Mark a wallet for review due to suspicious activity.',
-        security: [{ bearerAuth: [] }],
+        
         params: {
           type: 'object',
           properties: {
@@ -67,10 +67,10 @@ export const registerAdminRoutes = (app: FastifyInstance, prisma: PrismaClient):
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Admin'],
-        summary: 'Resolve a wallet flag',
+        
+        
         description: 'Mark a wallet flag as resolved.',
-        security: [{ bearerAuth: [] }],
+        
         params: {
           type: 'object',
           properties: {
@@ -110,10 +110,10 @@ export const registerAdminRoutes = (app: FastifyInstance, prisma: PrismaClient):
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Admin'],
-        summary: 'Freeze a creator account',
+        
+        
         description: 'Freeze a creator account pending review.',
-        security: [{ bearerAuth: [] }],
+        
         params: {
           type: 'object',
           properties: {
@@ -163,10 +163,10 @@ export const registerAdminRoutes = (app: FastifyInstance, prisma: PrismaClient):
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Admin'],
-        summary: 'Unfreeze a creator account',
+        
+        
         description: 'Resolve an account freeze.',
-        security: [{ bearerAuth: [] }],
+        
         params: {
           type: 'object',
           properties: {
@@ -206,10 +206,10 @@ export const registerAdminRoutes = (app: FastifyInstance, prisma: PrismaClient):
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Admin'],
-        summary: 'Get moderation queue',
+        
+        
         description: 'Get all active wallet flags and account freezes.',
-        security: [{ bearerAuth: [] }],
+        
         response: {
           200: { description: 'Moderation queue' },
           401: { description: 'Unauthorized' },

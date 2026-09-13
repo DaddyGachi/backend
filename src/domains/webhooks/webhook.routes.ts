@@ -14,10 +14,7 @@ export const registerWebhookRoutes = (app: FastifyInstance, prisma: PrismaClient
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Webhooks'],
-        summary: 'Register a webhook',
         description: 'Register a webhook to receive events when tips are created and confirmed.',
-        security: [{ bearerAuth: [] }],
         body: {
           type: 'object',
           required: ['url', 'events'],
@@ -26,7 +23,8 @@ export const registerWebhookRoutes = (app: FastifyInstance, prisma: PrismaClient
             events: {
               type: 'array',
               items: { type: 'string' },
-              description: 'Events to subscribe to (tip.created, tip.confirmed, tip.failed, payout.completed)',
+              description:
+                'Events to subscribe to (tip.created, tip.confirmed, tip.failed, payout.completed)',
             },
           },
         },
@@ -35,7 +33,7 @@ export const registerWebhookRoutes = (app: FastifyInstance, prisma: PrismaClient
           400: { description: 'Validation error' },
           401: { description: 'Unauthorized' },
         },
-      },
+      } as any,
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
@@ -73,15 +71,12 @@ export const registerWebhookRoutes = (app: FastifyInstance, prisma: PrismaClient
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Webhooks'],
-        summary: 'List webhooks',
         description: 'Get all webhooks registered for the creator.',
-        security: [{ bearerAuth: [] }],
         response: {
           200: { description: 'List of webhooks' },
           401: { description: 'Unauthorized' },
         },
-      },
+      } as any,
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
@@ -115,10 +110,7 @@ export const registerWebhookRoutes = (app: FastifyInstance, prisma: PrismaClient
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Webhooks'],
-        summary: 'Delete webhook',
         description: 'Delete a registered webhook.',
-        security: [{ bearerAuth: [] }],
         params: {
           type: 'object',
           properties: {
@@ -130,7 +122,7 @@ export const registerWebhookRoutes = (app: FastifyInstance, prisma: PrismaClient
           401: { description: 'Unauthorized' },
           404: { description: 'Webhook not found' },
         },
-      },
+      } as any,
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
@@ -167,10 +159,7 @@ export const registerWebhookRoutes = (app: FastifyInstance, prisma: PrismaClient
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Webhooks'],
-        summary: 'Get webhook delivery history',
         description: 'Get recent webhook delivery attempts and their status.',
-        security: [{ bearerAuth: [] }],
         params: {
           type: 'object',
           properties: {
@@ -182,7 +171,7 @@ export const registerWebhookRoutes = (app: FastifyInstance, prisma: PrismaClient
           401: { description: 'Unauthorized' },
           404: { description: 'Webhook not found' },
         },
-      },
+      } as any,
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {

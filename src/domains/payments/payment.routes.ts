@@ -28,11 +28,11 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
     {
       preHandler: [authMiddleware, rateLimitTipCreation],
       schema: {
-        tags: ['Payments'],
-        summary: 'Create a new tip',
+        
+        
         description:
           'Initiate a tip to a creator. Requires authentication and is rate limited to 10 tips per hour.',
-        security: [{ bearerAuth: [] }],
+        
         body: {
           type: 'object',
           required: ['creatorId', 'amount'],
@@ -101,8 +101,8 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
     '/api/v1/transactions/:id',
     {
       schema: {
-        tags: ['Payments'],
-        summary: 'Get tip details',
+        
+        
         description: 'Retrieve details of a specific tip by ID. Public endpoint.',
         params: {
           type: 'object',
@@ -144,10 +144,10 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Payments'],
-        summary: 'Get user tip history',
+        
+        
         description: 'Retrieve tips sent by the authenticated user with pagination support.',
-        security: [{ bearerAuth: [] }],
+        
         querystring: {
           type: 'object',
           properties: {
@@ -197,8 +197,8 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
     '/api/v1/transactions/creator/:creatorId',
     {
       schema: {
-        tags: ['Payments'],
-        summary: 'Get tips received by creator',
+        
+        
         description: 'Retrieve tips received by a creator. Public endpoint with pagination.',
         params: {
           type: 'object',
@@ -249,10 +249,10 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Payments'],
-        summary: 'Update tip status',
+        
+        
         description: 'Update the status of a tip (e.g., pending → confirmed).',
-        security: [{ bearerAuth: [] }],
+        
         params: {
           type: 'object',
           properties: {

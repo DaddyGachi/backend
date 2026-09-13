@@ -44,8 +44,8 @@ export const registerAuthRoutes = (app: FastifyInstance, prisma: PrismaClient): 
     '/api/v1/auth/register',
     {
       schema: {
-        tags: ['Auth'],
-        summary: 'Register a new user',
+        
+        
         description: 'Create a new user account with email and password.',
         body: {
           type: 'object',
@@ -86,8 +86,8 @@ export const registerAuthRoutes = (app: FastifyInstance, prisma: PrismaClient): 
     '/api/v1/auth/login',
     {
       schema: {
-        tags: ['Auth'],
-        summary: 'Login user',
+        
+        
         description: 'Authenticate user and receive JWT token.',
         body: {
           type: 'object',
@@ -128,10 +128,10 @@ export const registerAuthRoutes = (app: FastifyInstance, prisma: PrismaClient): 
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Auth'],
-        summary: 'Get current user',
+        
+        
         description: 'Retrieve information about the authenticated user.',
-        security: [{ bearerAuth: [] }],
+        
         response: {
           200: {
             description: 'Current user information',
@@ -172,10 +172,10 @@ export const registerAuthRoutes = (app: FastifyInstance, prisma: PrismaClient): 
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Auth'],
-        summary: 'Logout user',
+        
+        
         description: 'Invalidate the current JWT token.',
-        security: [{ bearerAuth: [] }],
+        
         response: {
           200: { description: 'Logout successful' },
           401: { description: 'Unauthorized' },

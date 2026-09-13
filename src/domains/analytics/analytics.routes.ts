@@ -14,15 +14,12 @@ export const registerAnalyticsRoutes = (app: FastifyInstance, prisma: PrismaClie
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Analytics'],
-        summary: 'Get creator summary statistics',
         description: 'Get total earnings, tip count, unique supporters, and average tip amount.',
-        security: [{ bearerAuth: [] }],
         response: {
           200: { description: 'Summary statistics' },
           401: { description: 'Unauthorized' },
         },
-      },
+      } as any,
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
@@ -56,14 +53,18 @@ export const registerAnalyticsRoutes = (app: FastifyInstance, prisma: PrismaClie
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Analytics'],
-        summary: 'Get earnings over time',
+        
+        
         description: 'Get daily earnings breakdown for a specified time period.',
-        security: [{ bearerAuth: [] }],
+        
         querystring: {
           type: 'object',
           properties: {
-            days: { type: 'string', default: '30', description: 'Number of days to analyze (default 30)' },
+            days: {
+              type: 'string',
+              default: '30',
+              description: 'Number of days to analyze (default 30)',
+            },
           },
         },
         response: {
@@ -112,14 +113,18 @@ export const registerAnalyticsRoutes = (app: FastifyInstance, prisma: PrismaClie
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Analytics'],
-        summary: 'Get top supporters',
+        
+        
         description: 'Get the top supporters by total tip amount.',
-        security: [{ bearerAuth: [] }],
+        
         querystring: {
           type: 'object',
           properties: {
-            limit: { type: 'string', default: '10', description: 'Number of top supporters to return' },
+            limit: {
+              type: 'string',
+              default: '10',
+              description: 'Number of top supporters to return',
+            },
           },
         },
         response: {
@@ -163,10 +168,10 @@ export const registerAnalyticsRoutes = (app: FastifyInstance, prisma: PrismaClie
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Analytics'],
-        summary: 'Get tip frequency statistics',
+        
+        
         description: 'Get tip statistics including average, min, max, and daily frequency.',
-        security: [{ bearerAuth: [] }],
+        
         querystring: {
           type: 'object',
           properties: {

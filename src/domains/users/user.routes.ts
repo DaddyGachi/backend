@@ -15,10 +15,10 @@ export const registerUserRoutes = (app: FastifyInstance, prisma: PrismaClient): 
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Users'],
-        summary: 'Get user profile',
+        
+        
         description: 'Retrieve the authenticated user profile.',
-        security: [{ bearerAuth: [] }],
+        
         response: {
           200: { description: 'User profile' },
           401: { description: 'Unauthorized' },
@@ -51,10 +51,10 @@ export const registerUserRoutes = (app: FastifyInstance, prisma: PrismaClient): 
     {
       preHandler: authMiddleware,
       schema: {
-        tags: ['Users'],
-        summary: 'Update user profile',
+        
+        
         description: 'Update the authenticated user profile.',
-        security: [{ bearerAuth: [] }],
+        
         body: {
           type: 'object',
           properties: {
