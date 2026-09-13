@@ -99,7 +99,7 @@ model Webhook {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  events_relation WebhookEvent[]
+  webhookEvents WebhookEvent[]
   
   @@index([creatorId])
 }
@@ -107,7 +107,7 @@ model Webhook {
 model WebhookEvent {
   id        String   @id @default(cuid())
   webhookId String
-  webhook   Webhook  @relation("events_relation", fields: [webhookId], references: [id], onDelete: Cascade)
+  webhook   Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
   
   eventType String   // tip.created, tip.confirmed, etc.
   payload   String   // JSON payload
