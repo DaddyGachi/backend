@@ -5,11 +5,7 @@ import { logger } from '../utils/logger';
 
 // Redis connection for BullMQ (using redis client package)
 export const redis = createClient({
-  host: config.REDIS_HOST || 'localhost',
-  port: config.REDIS_PORT || 6379,
-  socket: {
-    reconnectStrategy: (retries) => Math.min(retries * 50, 500),
-  },
+  url: config.REDIS_URL,
 });
 
 redis.on('connect', () => {

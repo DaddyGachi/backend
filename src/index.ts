@@ -54,7 +54,7 @@ app.get('/health', async (_request, _reply) => {
     dbLatency = Date.now() - startTime;
     dbStatus = 'healthy';
   } catch (error) {
-    app.log.error('Database health check failed:', error);
+    app.log.error({ error }, 'Database health check failed');
     dbStatus = 'unhealthy';
   }
 

@@ -24,7 +24,7 @@ export const registerMetricsRoute = (app: FastifyInstance, prisma: PrismaClient)
         const metrics = await getMetricsText();
         reply.type('text/plain; charset=utf-8').send(metrics);
       } catch (error) {
-        app.log.error('Error generating metrics:', error);
+        app.log.error({ error }, 'Error generating metrics');
         reply.code(500).send('Error generating metrics');
       }
     }
@@ -78,7 +78,7 @@ export const registerMetricsRoute = (app: FastifyInstance, prisma: PrismaClient)
           },
         });
       } catch (error) {
-        app.log.error('Error generating JSON metrics:', error);
+        app.log.error({ error }, 'Error generating JSON metrics');
         reply.code(500).send({ error: 'Error generating metrics' });
       }
     }

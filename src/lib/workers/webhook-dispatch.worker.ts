@@ -1,15 +1,13 @@
 import { Worker, Job } from 'bullmq';
-import { Redis } from 'ioredis';
+import { createClient } from 'redis';
 import axios from 'axios';
 import { PrismaClient } from '@prisma/client';
 import { config } from '../../config/env';
 import { logger } from '../../utils/logger';
 import crypto from 'crypto';
 
-const redis = new Redis({
-  host: config.REDIS_HOST || 'localhost',
-  port: config.REDIS_PORT || 6379,
-  maxRetriesPerRequest: null,
+const redis = createClient({
+  url: config.REDIS_URL,
 });
 
 const prisma = new PrismaClient();
@@ -17,9 +15,9 @@ const prisma = new PrismaClient();
 export const webhookDispatchWorker = new Worker(
   'webhook-dispatch',
   async (job: Job) => {
-    const { webhookId, transactionId, eventType, payload } = job.data;
+    const { webhookId, eventType, payload } = job.data;
 
-    logger.info(`Dispatching webhook ${webhookId} for ${eventType} event on transaction ${transactionId}`);
+    logger.info(`Dispatching webhook ${webhookId} for ${eventType} event`);
 
     try {
       const webhook = await prisma.webhook.findUnique({ where: { id: webhookId } });
@@ -45,14 +43,12 @@ export const webhookDispatchWorker = new Worker(
       });
 
       // Track successful dispatch
-      await prisma.webhookEvent.create({
+      await prisma.webhookEvent.update({
+        where: { id: job.data.eventId },
         data: {
-          webhookId,
-          transactionId,
-          eventType,
-          status: 'success',
-          statusCode: response.status,
-          deliveryId: job.id!,
+          status: 'delivered',
+          attempts: { increment: 1 },
+          updatedAt: new Date(),
         },
       });
 
@@ -63,15 +59,14 @@ export const webhookDispatchWorker = new Worker(
 
       logger.error(`Webhook dispatch failed for ${webhookId}:`, error);
 
-      // Track failed dispatch
-      await prisma.webhookEvent.create({
+      // Track failed dispatch attempt
+      await prisma.webhookEvent.update({
+        where: { id: job.data.eventId },
         data: {
-          webhookId,
-          transactionId,
-          eventType,
-          status: 'failed',
-          error: errorMsg,
-          deliveryId: job.id!,
+          status: 'pending',
+          attempts: { increment: 1 },
+          lastError: errorMsg,
+          updatedAt: new Date(),
         },
       });
 
@@ -80,12 +75,6 @@ export const webhookDispatchWorker = new Worker(
   },
   {
     connection: redis,
-    defaultJobOptions: {
-      attempts: 5,
-      backoff: { type: 'exponential', delay: 2000 },
-      removeOnComplete: { age: 3600 }, // Remove after 1 hour
-      removeOnFail: { age: 86400 }, // Keep failures for 24 hours
-    },
   }
 );
 

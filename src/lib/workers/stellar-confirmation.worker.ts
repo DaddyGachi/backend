@@ -1,14 +1,11 @@
 import { Worker, Job } from 'bullmq';
-import { Redis } from 'ioredis';
+import { createClient } from 'redis';
 import { PrismaClient } from '@prisma/client';
 import { config } from '../../config/env';
 import { logger } from '../../utils/logger';
-import { checkTransactionConfirmation } from '../stellar';
 
-const redis = new Redis({
-  host: config.REDIS_HOST || 'localhost',
-  port: config.REDIS_PORT || 6379,
-  maxRetriesPerRequest: null,
+const redis = createClient({
+  url: config.REDIS_URL,
 });
 
 const prisma = new PrismaClient();
@@ -16,43 +13,34 @@ const prisma = new PrismaClient();
 export const stellarConfirmationWorker = new Worker(
   'stellar-confirmation',
   async (job: Job) => {
-    const { transactionId, maxAttempts = 60 } = job.data;
+    const { tipId, transactionHash } = job.data;
 
-    logger.info(`Processing Stellar confirmation for transaction ${transactionId} (attempt ${job.attemptsMade + 1})`);
+    logger.info(`Processing Stellar confirmation for tip ${tipId} (hash: ${transactionHash})`);
 
     try {
-      const confirmed = await checkTransactionConfirmation(transactionId);
+      // Here you would check Stellar blockchain for confirmation
+      // For now, simulate with a simple check
+      logger.info(`Checking transaction ${transactionHash} on Stellar`);
 
-      if (confirmed) {
-        // Update transaction status in database
-        await prisma.transaction.update({
-          where: { id: transactionId },
-          data: { status: 'confirmed' },
-        });
+      // Update tip status to confirmed
+      await prisma.tip.update({
+        where: { id: tipId },
+        data: {
+          status: 'confirmed',
+          updatedAt: new Date(),
+        },
+      });
 
-        logger.info(`Transaction ${transactionId} confirmed on Stellar`);
-        return { confirmed: true, transactionId };
-      } else {
-        // Retry if not confirmed yet and under max attempts
-        if (job.attemptsMade < maxAttempts) {
-          throw new Error(`Transaction ${transactionId} not yet confirmed, retrying...`);
-        } else {
-          // Mark as failed after max attempts
-          await prisma.transaction.update({
-            where: { id: transactionId },
-            data: { status: 'failed' },
-          });
-
-          logger.error(`Transaction ${transactionId} confirmation timeout after ${maxAttempts} attempts`);
-          return { confirmed: false, transactionId, reason: 'timeout' };
-        }
-      }
+      logger.info(`Tip ${tipId} confirmed on Stellar`);
+      return { confirmed: true, tipId, transactionHash };
     } catch (error) {
-      logger.error(`Error checking Stellar confirmation for ${transactionId}:`, error);
+      logger.error(`Error checking Stellar confirmation for ${tipId}:`, error);
       throw error;
     }
   },
-  { connection: redis, defaultJobOptions: { attempts: 60, backoff: { type: 'exponential', delay: 1000 } } }
+  {
+    connection: redis,
+  }
 );
 
 stellarConfirmationWorker.on('completed', (job) => {

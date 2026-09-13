@@ -39,6 +39,8 @@ model Creator {
   pendingBalance Float @default(0)
   
   tips      Tip[]    @relation("CreatorTips")
+  webhooks  Webhook[]
+  freezes   AccountFreeze[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -81,5 +83,82 @@ model BlacklistedToken {
   expiresAt DateTime
   createdAt DateTime @default(now())
   
+  @@index([expiresAt])
+}
+
+model Webhook {
+  id        String   @id @default(cuid())
+  creatorId String
+  creator   Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  
+  url       String
+  events    String[] // tip.created, tip.confirmed, tip.failed, payout.completed
+  secret    String   // HMAC secret for signature verification
+  active    Boolean  @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  events_relation WebhookEvent[]
+  
+  @@index([creatorId])
+}
+
+model WebhookEvent {
+  id        String   @id @default(cuid())
+  webhookId String
+  webhook   Webhook  @relation("events_relation", fields: [webhookId], references: [id], onDelete: Cascade)
+  
+  eventType String   // tip.created, tip.confirmed, etc.
+  payload   String   // JSON payload
+  status    String   @default("pending") // pending, delivered, failed
+  attempts  Int      @default(0)
+  lastError String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([webhookId])
+  @@index([status])
+}
+
+model WalletFlag {
+  id        String   @id @default(cuid())
+  address   String   @unique
+  
+  reason    String
+  severity  String   // low, medium, high, critical
+  notes     String?
+  
+  flaggedBy String
+  resolved  Boolean  @default(false)
+  resolvedAt DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([resolved])
+  @@index([severity])
+}
+
+model AccountFreeze {
+  id        String   @id @default(cuid())
+  creatorId String
+  creator   Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  
+  reason    String
+  notes     String?
+  duration  Int?     // hours, null = indefinite
+  expiresAt DateTime?
+  
+  frozenBy  String
+  resolved  Boolean  @default(false)
+  resolvedAt DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([creatorId])
+  @@index([resolved])
   @@index([expiresAt])
 }

@@ -14,11 +14,13 @@ export class AnalyticsService extends BaseService {
   async getEarningsOverTime(
     creatorId: string,
     days = 30
-  ): Promise<{
-    date: string;
-    earnings: number;
-    tipCount: number;
-  }[]> {
+  ): Promise<
+    {
+      date: string;
+      earnings: number;
+      tipCount: number;
+    }[]
+  > {
     return this.executeWithLogging('analytics.earningsOverTime', async () => {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
@@ -64,12 +66,14 @@ export class AnalyticsService extends BaseService {
   async getTopSupporters(
     creatorId: string,
     limit = 10
-  ): Promise<{
-    userId: string;
-    totalAmount: number;
-    tipCount: number;
-    lastTipDate: string;
-  }[]> {
+  ): Promise<
+    {
+      userId: string;
+      totalAmount: number;
+      tipCount: number;
+      lastTipDate: string;
+    }[]
+  > {
     return this.executeWithLogging('analytics.topSupporters', async () => {
       const supporters = await this.prisma.tip.groupBy({
         by: ['fromUserId'],
@@ -160,23 +164,21 @@ export class AnalyticsService extends BaseService {
     averageTipAmount: number;
   }> {
     return this.executeWithLogging('analytics.summary', async () => {
-      const [totalTips, stats] = await Promise.all([
-        this.prisma.tip.count({
-          where: {
-            creatorId,
-            status: 'confirmed',
-          },
-        }),
-        this.prisma.tip.groupBy({
-          by: [],
-          where: {
-            creatorId,
-            status: 'confirmed',
-          },
-          _sum: { amount: true },
-          _count: { fromUserId: true },
-        }),
-      ]);
+      const totalTips = await this.prisma.tip.count({
+        where: {
+          creatorId,
+          status: 'confirmed',
+        },
+      });
+
+      const stats = await this.prisma.tip.aggregate({
+        where: {
+          creatorId,
+          status: 'confirmed',
+        },
+        _sum: { amount: true },
+        _avg: { amount: true },
+      });
 
       const uniqueSupporters = await this.prisma.tip.findMany({
         where: {
@@ -187,8 +189,8 @@ export class AnalyticsService extends BaseService {
         select: { fromUserId: true },
       });
 
-      const totalEarnings = stats[0]?._sum?.amount || 0;
-      const averageTipAmount = totalTips > 0 ? totalEarnings / totalTips : 0;
+      const totalEarnings = stats._sum.amount || 0;
+      const averageTipAmount = stats._avg.amount || 0;
 
       return {
         totalEarnings: Math.round(totalEarnings * 100) / 100,
