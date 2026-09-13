@@ -25,7 +25,48 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
    */
   app.post<{ Body: any }>(
     '/api/v1/transactions/tip',
-    { preHandler: [authMiddleware, rateLimitTipCreation] },
+    {
+      preHandler: [authMiddleware, rateLimitTipCreation],
+      schema: {
+        tags: ['Payments'],
+        summary: 'Create a new tip',
+        description:
+          'Initiate a tip to a creator. Requires authentication and is rate limited to 10 tips per hour.',
+        security: [{ bearerAuth: [] }],
+        body: {
+          type: 'object',
+          required: ['creatorId', 'amount'],
+          properties: {
+            creatorId: { type: 'string', description: 'ID of the creator receiving the tip' },
+            amount: { type: 'number', minimum: 1, description: 'Tip amount in USD' },
+            message: { type: 'string', description: 'Optional message from tipper' },
+            currency: { type: 'string', default: 'USD', description: 'Currency code' },
+          },
+        },
+        response: {
+          201: {
+            description: 'Tip created successfully',
+            type: 'object',
+            properties: {
+              success: { type: 'boolean' },
+              data: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  creatorId: { type: 'string' },
+                  amount: { type: 'number' },
+                  status: { type: 'string' },
+                  createdAt: { type: 'string' },
+                },
+              },
+            },
+          },
+          400: { description: 'Validation error' },
+          401: { description: 'Unauthorized' },
+          429: { description: 'Rate limit exceeded' },
+        },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const body = CreateTipSchema.parse(request.body);
@@ -58,6 +99,23 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
    */
   app.get<{ Params: { id: string } }>(
     '/api/v1/transactions/:id',
+    {
+      schema: {
+        tags: ['Payments'],
+        summary: 'Get tip details',
+        description: 'Retrieve details of a specific tip by ID. Public endpoint.',
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'Tip ID' },
+          },
+        },
+        response: {
+          200: { description: 'Tip details' },
+          404: { description: 'Tip not found' },
+        },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const { id } = request.params as { id: string };
@@ -83,7 +141,26 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
    */
   app.get<{ Querystring: { page?: string; pageSize?: string } }>(
     '/api/v1/transactions/history',
-    { preHandler: authMiddleware },
+    {
+      preHandler: authMiddleware,
+      schema: {
+        tags: ['Payments'],
+        summary: 'Get user tip history',
+        description: 'Retrieve tips sent by the authenticated user with pagination support.',
+        security: [{ bearerAuth: [] }],
+        querystring: {
+          type: 'object',
+          properties: {
+            page: { type: 'string', default: '1', description: 'Page number' },
+            pageSize: { type: 'string', default: '10', description: 'Items per page (max 100)' },
+          },
+        },
+        response: {
+          200: { description: 'User tip history with pagination' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const user = request.user;
@@ -118,6 +195,29 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
    */
   app.get<{ Params: { creatorId: string }; Querystring: { page?: string; pageSize?: string } }>(
     '/api/v1/transactions/creator/:creatorId',
+    {
+      schema: {
+        tags: ['Payments'],
+        summary: 'Get tips received by creator',
+        description: 'Retrieve tips received by a creator. Public endpoint with pagination.',
+        params: {
+          type: 'object',
+          properties: {
+            creatorId: { type: 'string', description: 'Creator ID' },
+          },
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            page: { type: 'string', default: '1', description: 'Page number' },
+            pageSize: { type: 'string', default: '10', description: 'Items per page (max 100)' },
+          },
+        },
+        response: {
+          200: { description: 'Tips received by creator' },
+        },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const { creatorId } = request.params as { creatorId: string };
@@ -146,7 +246,33 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
    */
   app.patch<{ Params: { id: string }; Body: UpdateTipStatusRequest }>(
     '/api/v1/transactions/:id/status',
-    { preHandler: authMiddleware },
+    {
+      preHandler: authMiddleware,
+      schema: {
+        tags: ['Payments'],
+        summary: 'Update tip status',
+        description: 'Update the status of a tip (e.g., pending → confirmed).',
+        security: [{ bearerAuth: [] }],
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'Tip ID' },
+          },
+        },
+        body: {
+          type: 'object',
+          required: ['status'],
+          properties: {
+            status: { type: 'string', enum: ['pending', 'confirmed', 'failed'] },
+            transactionHash: { type: 'string', description: 'Stellar transaction hash' },
+          },
+        },
+        response: {
+          200: { description: 'Tip status updated' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const { id } = request.params as { id: string };

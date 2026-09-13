@@ -24,6 +24,10 @@ app.register(cors, {
   credentials: true,
 });
 
+// TODO: Register Swagger documentation once @fastify/swagger is installed
+// app.register(swagger, swaggerConfig.swagger);
+// app.register(swaggerUi, swaggerConfig.uiConfig);
+
 // Register routes
 registerAuthRoutes(app, prisma);
 registerWalletRoutes(app, prisma);
@@ -33,11 +37,41 @@ registerCreatorPayoutRoutes(app, prisma);
 
 // Health check endpoint
 app.get('/health', async (_request, _reply) => {
-  return {
-    status: 'ok',
+  let dbStatus = 'unavailable';
+  let dbLatency = -1;
+
+  try {
+    const startTime = Date.now();
+    await prisma.$queryRaw`SELECT 1`;
+    dbLatency = Date.now() - startTime;
+    dbStatus = 'healthy';
+  } catch (error) {
+    app.log.error('Database health check failed:', error);
+    dbStatus = 'unhealthy';
+  }
+
+  const checks = {
+    status: dbStatus === 'healthy' ? 'ok' : 'degraded',
     timestamp: new Date().toISOString(),
     environment: config.NODE_ENV,
+    uptime: process.uptime(),
+    dependencies: {
+      database: {
+        status: dbStatus,
+        latency: dbLatency > 0 ? `${dbLatency}ms` : 'unknown',
+      },
+      memory: {
+        status: 'healthy',
+        usage: `${Math.round((process.memoryUsage().heapUsed / process.memoryUsage().heapTotal) * 100)}%`,
+      },
+      nodejs: {
+        version: process.version,
+        status: 'healthy',
+      },
+    },
   };
+
+  return checks;
 });
 
 // Error handler

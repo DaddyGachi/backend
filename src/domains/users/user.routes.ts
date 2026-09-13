@@ -12,7 +12,19 @@ export const registerUserRoutes = (app: FastifyInstance, prisma: PrismaClient): 
   // GET /api/v1/users/profile - Get user profile
   app.get(
     '/api/v1/users/profile',
-    { preHandler: authMiddleware },
+    {
+      preHandler: authMiddleware,
+      schema: {
+        tags: ['Users'],
+        summary: 'Get user profile',
+        description: 'Retrieve the authenticated user profile.',
+        security: [{ bearerAuth: [] }],
+        response: {
+          200: { description: 'User profile' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const user = request.user;
@@ -36,7 +48,28 @@ export const registerUserRoutes = (app: FastifyInstance, prisma: PrismaClient): 
   // PATCH /api/v1/users/profile - Update user profile
   app.patch<{ Body: any }>(
     '/api/v1/users/profile',
-    { preHandler: authMiddleware },
+    {
+      preHandler: authMiddleware,
+      schema: {
+        tags: ['Users'],
+        summary: 'Update user profile',
+        description: 'Update the authenticated user profile.',
+        security: [{ bearerAuth: [] }],
+        body: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'Display name' },
+            bio: { type: 'string', description: 'User bio' },
+            profileImage: { type: 'string', description: 'Profile image URL' },
+          },
+        },
+        response: {
+          200: { description: 'Profile updated' },
+          400: { description: 'Validation error' },
+          401: { description: 'Unauthorized' },
+        },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const user = request.user;
