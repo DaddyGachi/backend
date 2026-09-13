@@ -32,7 +32,10 @@
     "jsonwebtoken": "^9.0.3",
     "bcryptjs": "^2.4.3",
     "@stellar/stellar-sdk": "^12.3.0",
-    "axios": "^1.7.2"
+    "axios": "^1.7.2",
+    "bullmq": "^5.8.0",
+    "redis": "^4.6.13",
+    "prom-client": "^15.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.3.0",

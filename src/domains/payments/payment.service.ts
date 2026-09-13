@@ -15,6 +15,7 @@ import {
   checkTransactionStatus,
 } from '../../lib/stellar/transactions';
 import { logger } from '../../utils/logger';
+import { stellarConfirmationQueue } from '../../lib/queue';
 
 export class PaymentService extends BaseService {
   constructor(private prisma: PrismaClient) {
@@ -239,9 +240,7 @@ export class PaymentService extends BaseService {
       };
 
       if (!validTransitions[tip.status].includes(data.status)) {
-        throw new ValidationError(
-          `Cannot transition from ${tip.status} to ${data.status}`
-        );
+        throw new ValidationError(`Cannot transition from ${tip.status} to ${data.status}`);
       }
 
       const updatedTip = await this.prisma.tip.update({
@@ -265,9 +264,7 @@ export class PaymentService extends BaseService {
           },
         });
 
-        logger.info(
-          `Tip completed and creator earnings updated: ${tipId}, amount: ${tip.amount}`
-        );
+        logger.info(`Tip completed and creator earnings updated: ${tipId}, amount: ${tip.amount}`);
       }
 
       return this.formatTipResponse(updatedTip);
@@ -406,18 +403,23 @@ export class PaymentService extends BaseService {
         throw new ValidationError('No transaction hash found for this tip');
       }
 
-      try {
-        const confirmationResult = await checkTransactionStatus(tip.transactionHash);
-
-        if (confirmationResult.confirmed && tip.status === TipStatus.PENDING) {
-          return this.updateTipStatus(tipId, { status: TipStatus.COMPLETED });
+      // Queue the Stellar confirmation check as async job instead of blocking
+      await stellarConfirmationQueue.add(
+        'confirm-transaction',
+        {
+          transactionId: tipId,
+          transactionHash: tip.transactionHash,
+        },
+        {
+          attempts: 60,
+          backoff: { type: 'exponential', delay: 1000 },
         }
+      );
 
-        return this.formatTipResponse(tip);
-      } catch (error) {
-        logger.error(`Failed to check transaction confirmation for tip ${tipId}:`, error);
-        throw new ValidationError('Failed to check transaction status');
-      }
+      logger.info(`Queued Stellar confirmation check for tip ${tipId}`);
+
+      // Return current tip status immediately (job runs in background)
+      return this.formatTipResponse(tip);
     });
   }
 

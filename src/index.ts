@@ -8,6 +8,10 @@ import { registerWalletRoutes } from './domains/auth/wallet.routes';
 import { registerPaymentRoutes } from './domains/payments/payment.routes';
 import { registerUserRoutes } from './domains/users/user.routes';
 import { registerCreatorPayoutRoutes } from './domains/creators/payout.routes';
+import { registerWebhookRoutes } from './domains/webhooks/webhook.routes';
+import { registerAnalyticsRoutes } from './domains/analytics/analytics.routes';
+import { registerAdminRoutes } from './domains/admin/admin.routes';
+import { registerMetricsRoute } from './routes/metrics.routes';
 
 const app = Fastify({
   logger: {
@@ -34,6 +38,10 @@ registerWalletRoutes(app, prisma);
 registerPaymentRoutes(app, prisma);
 registerUserRoutes(app, prisma);
 registerCreatorPayoutRoutes(app, prisma);
+registerWebhookRoutes(app, prisma);
+registerAnalyticsRoutes(app, prisma);
+registerAdminRoutes(app, prisma);
+registerMetricsRoute(app, prisma);
 
 // Health check endpoint
 app.get('/health', async (_request, _reply) => {
