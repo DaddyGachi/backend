@@ -1,13 +1,15 @@
 import { Queue, Worker, QueueEvents } from 'bullmq';
-import { Redis } from 'ioredis';
+import { createClient } from 'redis';
 import { config } from '../config/env';
 import { logger } from '../utils/logger';
 
-// Redis connection for BullMQ
-export const redis = new Redis({
+// Redis connection for BullMQ (using redis client package)
+export const redis = createClient({
   host: config.REDIS_HOST || 'localhost',
   port: config.REDIS_PORT || 6379,
-  maxRetriesPerRequest: null,
+  socket: {
+    reconnectStrategy: (retries) => Math.min(retries * 50, 500),
+  },
 });
 
 redis.on('connect', () => {
@@ -16,6 +18,11 @@ redis.on('connect', () => {
 
 redis.on('error', (err) => {
   logger.error('Redis connection error:', err);
+});
+
+// Initialize Redis connection
+redis.connect().catch((err) => {
+  logger.error('Failed to connect to Redis:', err);
 });
 
 // Job queues
@@ -53,5 +60,5 @@ export async function closeQueues() {
   await webhookDispatchQueue.close();
   await stellarConfirmationEvents.close();
   await webhookDispatchEvents.close();
-  await redis.disconnect();
+  await redis.quit();
 }
