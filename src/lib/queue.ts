@@ -22,16 +22,18 @@ redis.connect().catch((err) => {
 });
 
 // Job queues
-export const stellarConfirmationQueue = new Queue('stellar-confirmation', { connection: redis });
-export const webhookDispatchQueue = new Queue('webhook-dispatch', { connection: redis });
+export const stellarConfirmationQueue = new Queue('stellar-confirmation', {
+  connection: redis as any,
+});
+export const webhookDispatchQueue = new Queue('webhook-dispatch', { connection: redis as any });
 
 // Queue event handlers
 export const stellarConfirmationEvents = new QueueEvents('stellar-confirmation', {
-  connection: redis,
+  connection: redis as any,
 });
 
 export const webhookDispatchEvents = new QueueEvents('webhook-dispatch', {
-  connection: redis,
+  connection: redis as any,
 });
 
 // Initialize queue event listeners

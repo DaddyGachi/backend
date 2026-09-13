@@ -16,7 +16,7 @@ export const registerAdminRoutes = (app: FastifyInstance, prisma: PrismaClient):
       schema: {
         
         
-        description: 'Mark a wallet for review due to suspicious activity.',
+
         
         params: {
           type: 'object',
@@ -69,7 +69,7 @@ export const registerAdminRoutes = (app: FastifyInstance, prisma: PrismaClient):
       schema: {
         
         
-        description: 'Mark a wallet flag as resolved.',
+
         
         params: {
           type: 'object',
@@ -112,7 +112,7 @@ export const registerAdminRoutes = (app: FastifyInstance, prisma: PrismaClient):
       schema: {
         
         
-        description: 'Freeze a creator account pending review.',
+
         
         params: {
           type: 'object',
@@ -165,7 +165,7 @@ export const registerAdminRoutes = (app: FastifyInstance, prisma: PrismaClient):
       schema: {
         
         
-        description: 'Resolve an account freeze.',
+
         
         params: {
           type: 'object',
@@ -208,7 +208,7 @@ export const registerAdminRoutes = (app: FastifyInstance, prisma: PrismaClient):
       schema: {
         
         
-        description: 'Get all active wallet flags and account freezes.',
+
         
         response: {
           200: { description: 'Moderation queue' },

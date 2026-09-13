@@ -152,15 +152,17 @@ export class WebhookService extends BaseService {
     webhookId: string,
     creatorId: string,
     limit = 50
-  ): Promise<{
-    id: string;
-    transactionId: string;
-    eventType: string;
-    status: string;
-    statusCode?: number;
-    error?: string;
-    deliveredAt: string;
-  }[]> {
+  ): Promise<
+    {
+      id: string;
+      transactionId: string;
+      eventType: string;
+      status: string;
+      statusCode?: number;
+      error?: string;
+      deliveredAt: string;
+    }[]
+  > {
     return this.executeWithLogging('webhook.history', async () => {
       const webhook = await this.prisma.webhook.findUnique({
         where: { id: webhookId },
@@ -178,12 +180,12 @@ export class WebhookService extends BaseService {
 
       return events.map((e) => ({
         id: e.id,
-        transactionId: e.transactionId,
         eventType: e.eventType,
         status: e.status,
-        statusCode: e.statusCode || undefined,
-        error: e.error || undefined,
-        deliveredAt: e.createdAt.toISOString(),
+        attempts: e.attempts,
+        lastError: e.lastError || undefined,
+        createdAt: e.createdAt.toISOString(),
+        updatedAt: e.updatedAt.toISOString(),
       }));
     });
   }

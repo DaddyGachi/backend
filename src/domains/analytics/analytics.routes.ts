@@ -14,7 +14,7 @@ export const registerAnalyticsRoutes = (app: FastifyInstance, prisma: PrismaClie
     {
       preHandler: authMiddleware,
       schema: {
-        description: 'Get total earnings, tip count, unique supporters, and average tip amount.',
+
         response: {
           200: { description: 'Summary statistics' },
           401: { description: 'Unauthorized' },
@@ -55,7 +55,7 @@ export const registerAnalyticsRoutes = (app: FastifyInstance, prisma: PrismaClie
       schema: {
         
         
-        description: 'Get daily earnings breakdown for a specified time period.',
+
         
         querystring: {
           type: 'object',
@@ -63,7 +63,7 @@ export const registerAnalyticsRoutes = (app: FastifyInstance, prisma: PrismaClie
             days: {
               type: 'string',
               default: '30',
-              description: 'Number of days to analyze (default 30)',
+
             },
           },
         },
@@ -115,7 +115,7 @@ export const registerAnalyticsRoutes = (app: FastifyInstance, prisma: PrismaClie
       schema: {
         
         
-        description: 'Get the top supporters by total tip amount.',
+
         
         querystring: {
           type: 'object',
@@ -123,7 +123,7 @@ export const registerAnalyticsRoutes = (app: FastifyInstance, prisma: PrismaClie
             limit: {
               type: 'string',
               default: '10',
-              description: 'Number of top supporters to return',
+
             },
           },
         },
@@ -170,7 +170,7 @@ export const registerAnalyticsRoutes = (app: FastifyInstance, prisma: PrismaClie
       schema: {
         
         
-        description: 'Get tip statistics including average, min, max, and daily frequency.',
+
         
         querystring: {
           type: 'object',

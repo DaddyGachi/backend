@@ -45,7 +45,7 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
         },
         response: {
           201: {
-            description: 'Tip created successfully',
+
             type: 'object',
             properties: {
               success: { type: 'boolean' },
@@ -103,7 +103,7 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
       schema: {
         
         
-        description: 'Retrieve details of a specific tip by ID. Public endpoint.',
+
         params: {
           type: 'object',
           properties: {
@@ -146,7 +146,7 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
       schema: {
         
         
-        description: 'Retrieve tips sent by the authenticated user with pagination support.',
+
         
         querystring: {
           type: 'object',
@@ -199,7 +199,7 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
       schema: {
         
         
-        description: 'Retrieve tips received by a creator. Public endpoint with pagination.',
+
         params: {
           type: 'object',
           properties: {
@@ -251,7 +251,7 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
       schema: {
         
         
-        description: 'Update the status of a tip (e.g., pending → confirmed).',
+
         
         params: {
           type: 'object',

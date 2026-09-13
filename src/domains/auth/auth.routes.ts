@@ -46,7 +46,7 @@ export const registerAuthRoutes = (app: FastifyInstance, prisma: PrismaClient): 
       schema: {
         
         
-        description: 'Create a new user account with email and password.',
+
         body: {
           type: 'object',
           required: ['email', 'password'],
@@ -58,7 +58,7 @@ export const registerAuthRoutes = (app: FastifyInstance, prisma: PrismaClient): 
         },
         response: {
           201: {
-            description: 'User registered successfully',
+
             type: 'object',
             properties: {
               success: { type: 'boolean' },
@@ -88,7 +88,7 @@ export const registerAuthRoutes = (app: FastifyInstance, prisma: PrismaClient): 
       schema: {
         
         
-        description: 'Authenticate user and receive JWT token.',
+
         body: {
           type: 'object',
           required: ['email', 'password'],
@@ -99,7 +99,7 @@ export const registerAuthRoutes = (app: FastifyInstance, prisma: PrismaClient): 
         },
         response: {
           200: {
-            description: 'Login successful',
+
             type: 'object',
             properties: {
               success: { type: 'boolean' },
@@ -130,11 +130,11 @@ export const registerAuthRoutes = (app: FastifyInstance, prisma: PrismaClient): 
       schema: {
         
         
-        description: 'Retrieve information about the authenticated user.',
+
         
         response: {
           200: {
-            description: 'Current user information',
+
             type: 'object',
             properties: {
               success: { type: 'boolean' },
@@ -174,7 +174,7 @@ export const registerAuthRoutes = (app: FastifyInstance, prisma: PrismaClient): 
       schema: {
         
         
-        description: 'Invalidate the current JWT token.',
+
         
         response: {
           200: { description: 'Logout successful' },

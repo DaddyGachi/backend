@@ -74,7 +74,7 @@ export const webhookDispatchWorker = new Worker(
     }
   },
   {
-    connection: redis,
+    connection: redis as any,
   }
 );
 

@@ -17,7 +17,7 @@ export const registerUserRoutes = (app: FastifyInstance, prisma: PrismaClient): 
       schema: {
         
         
-        description: 'Retrieve the authenticated user profile.',
+
         
         response: {
           200: { description: 'User profile' },
@@ -53,7 +53,7 @@ export const registerUserRoutes = (app: FastifyInstance, prisma: PrismaClient): 
       schema: {
         
         
-        description: 'Update the authenticated user profile.',
+
         
         body: {
           type: 'object',

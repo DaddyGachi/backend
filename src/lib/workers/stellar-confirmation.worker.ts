@@ -39,7 +39,7 @@ export const stellarConfirmationWorker = new Worker(
     }
   },
   {
-    connection: redis,
+    connection: redis as any,
   }
 );
 
