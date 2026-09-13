@@ -28,24 +28,18 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
     {
       preHandler: [authMiddleware, rateLimitTipCreation],
       schema: {
-        
-        
-        description:
-          'Initiate a tip to a creator. Requires authentication and is rate limited to 10 tips per hour.',
-        
         body: {
           type: 'object',
           required: ['creatorId', 'amount'],
           properties: {
-            creatorId: { type: 'string', description: 'ID of the creator receiving the tip' },
-            amount: { type: 'number', minimum: 1, description: 'Tip amount in USD' },
-            message: { type: 'string', description: 'Optional message from tipper' },
-            currency: { type: 'string', default: 'USD', description: 'Currency code' },
+            creatorId: { type: 'string' },
+            amount: { type: 'number', minimum: 1 },
+            message: { type: 'string' },
+            currency: { type: 'string', default: 'USD' },
           },
         },
         response: {
           201: {
-
             type: 'object',
             properties: {
               success: { type: 'boolean' },
@@ -101,9 +95,6 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
     '/api/v1/transactions/:id',
     {
       schema: {
-        
-        
-
         params: {
           type: 'object',
           properties: {
@@ -144,10 +135,6 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
     {
       preHandler: authMiddleware,
       schema: {
-        
-        
-
-        
         querystring: {
           type: 'object',
           properties: {
@@ -197,9 +184,6 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
     '/api/v1/transactions/creator/:creatorId',
     {
       schema: {
-        
-        
-
         params: {
           type: 'object',
           properties: {
@@ -249,10 +233,6 @@ export const registerPaymentRoutes = (app: FastifyInstance, prisma: PrismaClient
     {
       preHandler: authMiddleware,
       schema: {
-        
-        
-
-        
         params: {
           type: 'object',
           properties: {

@@ -155,12 +155,12 @@ export class WebhookService extends BaseService {
   ): Promise<
     {
       id: string;
-      transactionId: string;
       eventType: string;
       status: string;
-      statusCode?: number;
-      error?: string;
-      deliveredAt: string;
+      attempts: number;
+      lastError?: string;
+      createdAt: string;
+      updatedAt: string;
     }[]
   > {
     return this.executeWithLogging('webhook.history', async () => {
