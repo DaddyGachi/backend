@@ -41,9 +41,15 @@ importers:
       fastify:
         specifier: ^4.27.0
         version: 4.29.1
+      generic-pool:
+        specifier: ^3.8.2
+        version: 3.9.0
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3
+      lru-cache:
+        specifier: ^10.4.0
+        version: 10.4.3
       pg:
         specifier: ^8.11.3
         version: 8.23.0
@@ -1579,6 +1585,9 @@ packages:
 
   loupe@2.3.7:
     resolution: {integrity: sha512-zSMINGVYkdpYSOBmLi0D1Uo7JU9nVdQKrHxC8eYlV+9YKK9WePqAlL7lSlorG/U2Fw1w0hTBmaa/jrQ3UbPHtA==}
+
+  lru-cache@10.4.3:
+    resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
 
   luxon@3.7.2:
     resolution: {integrity: sha512-vtEhXh/gNjI9Yg1u4jX/0YVPMvxzHuGgCm6tC5kZyb08yjGWGnqAjGJvcXbqQR2P3MyMEFnRbpcdFS6PBcLqew==}
@@ -3658,6 +3667,8 @@ snapshots:
   loupe@2.3.7:
     dependencies:
       get-func-name: 2.0.2
+
+  lru-cache@10.4.3: {}
 
   luxon@3.7.2: {}
 

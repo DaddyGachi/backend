@@ -14,7 +14,8 @@ import { registerAnalyticsRoutes } from './domains/analytics/analytics.routes';
 import { registerAdminRoutes } from './domains/admin/admin.routes';
 import { registerMetricsRoute } from './routes/metrics.routes';
 import redisPool, { startRedisHealthCheck } from './lib/redisPool';
-import cache from './lib/cache';
+import cache from './lib/cache/index';
+import { initializeCacheWarming } from './lib/cache/cache-warming';
 
 const app = Fastify({
   logger: {
@@ -151,6 +152,16 @@ const start = async (): Promise<void> => {
       } catch (dbErr) {
         app.log.warn({ dbErr }, 'Database pool initialization warning, continuing startup');
       }
+    }
+
+    // Start Redis health check
+    startRedisHealthCheck();
+
+    // Initialize cache warming (non-blocking)
+    if (config.DATABASE_URL) {
+      initializeCacheWarming(prisma).catch((err) => {
+        app.log.warn({ err }, 'Cache warming failed, continuing startup');
+      });
     }
 
     await app.listen({ port: config.PORT, host: '0.0.0.0' });
