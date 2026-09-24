@@ -12,7 +12,7 @@ export const blacklistToken = async (token: string, expiresAt: Date): Promise<vo
     await prisma.blacklistedToken.create({
       data: { token, expiresAt },
     });
-    logger.debug(`Token blacklisted: expires at ${expiresAt}`);
+    logger.info(`Token blacklisted: expires at ${expiresAt.toISOString()}`);
   } catch (error) {
     logger.error('Failed to blacklist token:', error);
   }
@@ -42,5 +42,28 @@ export const cleanupExpiredTokens = async (): Promise<void> => {
     logger.debug('Expired tokens cleaned up');
   } catch (error) {
     logger.error('Failed to clean up expired tokens:', error);
+  }
+};
+
+export const blacklistRefreshToken = async (jti: string, expiresAt: Date): Promise<void> => {
+  try {
+    await prisma.blacklistedRefreshToken.create({
+      data: { jti, expiresAt },
+    });
+    logger.info(`Refresh token blacklisted (JTI: ${jti}): expires at ${expiresAt.toISOString()}`);
+  } catch (error) {
+    logger.error('Failed to blacklist refresh token:', error);
+  }
+};
+
+export const isRefreshTokenBlacklisted = async (jti: string): Promise<boolean> => {
+  try {
+    const blacklisted = await prisma.blacklistedRefreshToken.findUnique({
+      where: { jti },
+    });
+    return !!blacklisted;
+  } catch (error) {
+    logger.error('Failed to check refresh token blacklist:', error);
+    return false;
   }
 };

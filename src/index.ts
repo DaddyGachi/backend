@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import { config } from './config/env';
 import { AppError } from './utils/errors';
 import { PrismaClient } from '@prisma/client';
+import { initializeDatabase, closeDatabase, checkDatabaseHealth, getPoolMetrics, getCircuitBreaker } from './db';
 import { registerAuthRoutes } from './domains/auth/auth.routes';
 import { registerWalletRoutes } from './domains/auth/wallet.routes';
 import { registerPaymentRoutes } from './domains/payments/payment.routes';
@@ -30,10 +31,6 @@ app.register(cors, {
   credentials: true,
 });
 
-// TODO: Register Swagger documentation once @fastify/swagger is installed
-// app.register(swagger, swaggerConfig.swagger);
-// app.register(swaggerUi, swaggerConfig.uiConfig);
-
 // Register routes
 registerAuthRoutes(app, prisma);
 registerWalletRoutes(app, prisma);
@@ -47,28 +44,33 @@ registerMetricsRoute(app, prisma);
 
 // Health check endpoint
 app.get('/health', async (_request, _reply) => {
-  let dbStatus = 'unavailable';
-  let dbLatency = -1;
+  const dbHealth = await checkDatabaseHealth();
+  const poolMetrics = getPoolMetrics();
+  const cb = getCircuitBreaker();
 
-  try {
-    const startTime = Date.now();
-    await prisma.$queryRaw`SELECT 1`;
-    dbLatency = Date.now() - startTime;
-    dbStatus = 'healthy';
-  } catch (error) {
-    app.log.error({ error }, 'Database health check failed');
-    dbStatus = 'unhealthy';
-  }
+  const isHealthy = dbHealth.status === 'healthy';
+  const isDegraded = dbHealth.status === 'degraded';
 
   const checks = {
-    status: dbStatus === 'healthy' ? 'ok' : 'degraded',
+    status: isHealthy ? 'ok' : isDegraded ? 'degraded' : 'unhealthy',
     timestamp: new Date().toISOString(),
     environment: config.NODE_ENV,
     uptime: process.uptime(),
     dependencies: {
       database: {
-        status: dbStatus,
-        latency: dbLatency > 0 ? `${dbLatency}ms` : 'unknown',
+        status: dbHealth.status,
+        latency: dbHealth.latencyMs >= 0 ? `${dbHealth.latencyMs}ms` : 'unknown',
+        pool: {
+          total: poolMetrics.totalCount,
+          active: poolMetrics.activeCount,
+          idle: poolMetrics.idleCount,
+          waiting: poolMetrics.waitingCount,
+        },
+        circuitBreaker: {
+          state: cb.getState(),
+          failures: cb.getMetrics().failures,
+          tripCount: cb.getMetrics().tripCount,
+        },
       },
       redis: {
         status: (redisPool && (redisPool.size ?? 0) > 0) ? 'healthy' : 'degraded',
@@ -104,9 +106,53 @@ app.setErrorHandler(async (error, _request: FastifyRequest, reply: FastifyReply)
   });
 });
 
+// Service becomes "ready" only once Fastify has finished booting (all
+// plugins/routes registered) - readiness stays 503 until this fires, so
+// load balancers don't route traffic before the process can serve it.
+app.addHook('onReady', async () => {
+  setServiceState('ready');
+});
+
+// Graceful shutdown: flip readiness to `shutting_down` first so the
+// readiness probe starts failing immediately (giving the load balancer a
+// chance to drain traffic away from this instance), then close the
+// Fastify server and its dependencies before the process exits.
+let shuttingDown = false;
+
+const shutdown = async (signal: 'SIGTERM' | 'SIGINT'): Promise<void> => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+
+  app.log.info(`Received ${signal}, starting graceful shutdown`);
+  setServiceState('shutting_down');
+
+  try {
+    await app.close();
+    await prisma.$disconnect();
+    process.exit(0);
+  } catch (err) {
+    app.log.error(err, 'Error during graceful shutdown');
+    process.exit(1);
+  }
+};
+
+process.on('SIGTERM', () => {
+  void shutdown('SIGTERM');
+});
+process.on('SIGINT', () => {
+  void shutdown('SIGINT');
+});
+
 const start = async (): Promise<void> => {
   try {
-    startRedisHealthCheck();
+    if (config.DATABASE_URL) {
+      try {
+        await initializeDatabase();
+      } catch (dbErr) {
+        app.log.warn({ dbErr }, 'Database pool initialization warning, continuing startup');
+      }
+    }
+
     await app.listen({ port: config.PORT, host: '0.0.0.0' });
     app.log.info(`Server listening on http://0.0.0.0:${config.PORT}`);
   } catch (err) {
@@ -115,4 +161,22 @@ const start = async (): Promise<void> => {
   }
 };
 
+const handleShutdown = async (signal: string): Promise<void> => {
+  app.log.info(`Received ${signal}, starting graceful shutdown...`);
+  try {
+    await app.close();
+    await closeDatabase();
+    await prisma.$disconnect();
+    app.log.info('Graceful shutdown complete');
+    process.exit(0);
+  } catch (err) {
+    app.log.error({ err }, 'Error during shutdown');
+    process.exit(1);
+  }
+};
+
+process.on('SIGINT', () => handleShutdown('SIGINT'));
+process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+
 start();
+
