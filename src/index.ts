@@ -12,6 +12,9 @@ import { registerWebhookRoutes } from './domains/webhooks/webhook.routes';
 import { registerAnalyticsRoutes } from './domains/analytics/analytics.routes';
 import { registerAdminRoutes } from './domains/admin/admin.routes';
 import { registerMetricsRoute } from './routes/metrics.routes';
+import { registerHealthRoutes } from './routes/health.routes';
+import { setServiceState } from './services/health.service';
+import { redis } from './lib/queue';
 
 const app = Fastify({
   logger: {
@@ -43,44 +46,9 @@ registerAnalyticsRoutes(app, prisma);
 registerAdminRoutes(app, prisma);
 registerMetricsRoute(app, prisma);
 
-// Health check endpoint
-app.get('/health', async (_request, _reply) => {
-  let dbStatus = 'unavailable';
-  let dbLatency = -1;
-
-  try {
-    const startTime = Date.now();
-    await prisma.$queryRaw`SELECT 1`;
-    dbLatency = Date.now() - startTime;
-    dbStatus = 'healthy';
-  } catch (error) {
-    app.log.error({ error }, 'Database health check failed');
-    dbStatus = 'unhealthy';
-  }
-
-  const checks = {
-    status: dbStatus === 'healthy' ? 'ok' : 'degraded',
-    timestamp: new Date().toISOString(),
-    environment: config.NODE_ENV,
-    uptime: process.uptime(),
-    dependencies: {
-      database: {
-        status: dbStatus,
-        latency: dbLatency > 0 ? `${dbLatency}ms` : 'unknown',
-      },
-      memory: {
-        status: 'healthy',
-        usage: `${Math.round((process.memoryUsage().heapUsed / process.memoryUsage().heapTotal) * 100)}%`,
-      },
-      nodejs: {
-        version: process.version,
-        status: 'healthy',
-      },
-    },
-  };
-
-  return checks;
-});
+// Health check endpoints (liveness + readiness). Reuses the shared Redis
+// client from lib/queue.ts rather than opening a new connection.
+registerHealthRoutes(app, prisma, redis);
 
 // Error handler
 app.setErrorHandler(async (error, _request: FastifyRequest, reply: FastifyReply): Promise<void> => {
@@ -97,6 +65,43 @@ app.setErrorHandler(async (error, _request: FastifyRequest, reply: FastifyReply)
     error: 'Internal server error',
     code: 'INTERNAL_ERROR',
   });
+});
+
+// Service becomes "ready" only once Fastify has finished booting (all
+// plugins/routes registered) - readiness stays 503 until this fires, so
+// load balancers don't route traffic before the process can serve it.
+app.addHook('onReady', async () => {
+  setServiceState('ready');
+});
+
+// Graceful shutdown: flip readiness to `shutting_down` first so the
+// readiness probe starts failing immediately (giving the load balancer a
+// chance to drain traffic away from this instance), then close the
+// Fastify server and its dependencies before the process exits.
+let shuttingDown = false;
+
+const shutdown = async (signal: 'SIGTERM' | 'SIGINT'): Promise<void> => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+
+  app.log.info(`Received ${signal}, starting graceful shutdown`);
+  setServiceState('shutting_down');
+
+  try {
+    await app.close();
+    await prisma.$disconnect();
+    process.exit(0);
+  } catch (err) {
+    app.log.error(err, 'Error during graceful shutdown');
+    process.exit(1);
+  }
+};
+
+process.on('SIGTERM', () => {
+  void shutdown('SIGTERM');
+});
+process.on('SIGINT', () => {
+  void shutdown('SIGINT');
 });
 
 const start = async (): Promise<void> => {
