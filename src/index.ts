@@ -13,9 +13,8 @@ import { registerWebhookRoutes } from './domains/webhooks/webhook.routes';
 import { registerAnalyticsRoutes } from './domains/analytics/analytics.routes';
 import { registerAdminRoutes } from './domains/admin/admin.routes';
 import { registerMetricsRoute } from './routes/metrics.routes';
-import { registerHealthRoutes } from './routes/health.routes';
-import { setServiceState } from './services/health.service';
-import { redis } from './lib/queue';
+import redisPool, { startRedisHealthCheck } from './lib/redisPool';
+import cache from './lib/cache';
 
 const app = Fastify({
   logger: {
@@ -72,6 +71,9 @@ app.get('/health', async (_request, _reply) => {
           failures: cb.getMetrics().failures,
           tripCount: cb.getMetrics().tripCount,
         },
+      },
+      redis: {
+        status: (redisPool && (redisPool.size ?? 0) > 0) ? 'healthy' : 'degraded',
       },
       memory: {
         status: 'healthy',
