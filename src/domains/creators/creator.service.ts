@@ -123,4 +123,79 @@ export class CreatorService extends BaseService {
       return creator;
     });
   }
+
+  /**
+   * List public creators with offset pagination, multi-column sorting, and search filtering
+   */
+  async listCreators(
+    page: number = 1,
+    pageSize: number = 20,
+    options: {
+      search?: string;
+      verifiedOnly?: boolean;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ) {
+    return this.executeWithLogging('creator.listCreators', async () => {
+      const { sanitizePageNumber, sanitizePageSize, parseSortParameters } = await import('../../utils/pagination');
+
+      const safePage = sanitizePageNumber(page);
+      const safePageSize = sanitizePageSize(pageSize, 20);
+
+      const where: any = { isPublic: true };
+      if (options.verifiedOnly) {
+        where.verified = true;
+      }
+      if (options.search) {
+        where.OR = [
+          { username: { contains: options.search, mode: 'insensitive' } },
+          { displayName: { contains: options.search, mode: 'insensitive' } },
+        ];
+      }
+
+      const sortFields = parseSortParameters(
+        options.sortBy,
+        options.sortOrder,
+        ['createdAt', 'totalEarnings', 'displayName', 'username', 'id'],
+        'totalEarnings',
+        'desc'
+      );
+
+      const orderBy = sortFields.map((s) => ({ [s.field]: s.direction }));
+      const skip = (safePage - 1) * safePageSize;
+
+      const [creators, total] = await Promise.all([
+        this.prisma.creator.findMany({
+          where,
+          skip,
+          take: safePageSize,
+          orderBy,
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                name: true,
+              },
+            },
+          },
+        }),
+        this.prisma.creator.count({ where }),
+      ]);
+
+      const totalPages = Math.ceil(total / safePageSize);
+
+      return {
+        creators,
+        items: creators,
+        total,
+        page: safePage,
+        pageSize: safePageSize,
+        totalPages,
+        hasNext: safePage < totalPages,
+        hasPrev: safePage > 1,
+      };
+    });
+  }
 }

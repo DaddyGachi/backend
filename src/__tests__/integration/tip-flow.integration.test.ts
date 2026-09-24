@@ -14,21 +14,33 @@ let testUserId: string;
 let testCreatorId: string;
 let testCreatorUserId: string;
 
-describe('Tip Flow Integration Tests', () => {
+const isDbAvailable = Boolean(process.env.DATABASE_URL);
+
+describe.skipIf(!isDbAvailable)('Tip Flow Integration Tests', () => {
   beforeAll(async () => {
-    prisma = new PrismaClient();
-    paymentService = new PaymentService(prisma);
-    userService = new UserService(prisma);
-    payoutService = new PayoutService(prisma);
+    try {
+      prisma = new PrismaClient();
+      await prisma.$connect();
+      paymentService = new PaymentService(prisma);
+      userService = new UserService(prisma);
+      payoutService = new PayoutService(prisma);
+    } catch {
+      console.warn('Database connection failed, skipping integration tests');
+    }
   });
 
   afterAll(async () => {
-    // Clean up test data
-    await prisma.tip.deleteMany({});
-    await prisma.wallet.deleteMany({});
-    await prisma.creator.deleteMany({});
-    await prisma.user.deleteMany({});
-    await prisma.$disconnect();
+    if (!prisma) return;
+    try {
+      // Clean up test data
+      await prisma.tip.deleteMany({});
+      await prisma.wallet.deleteMany({});
+      await prisma.creator.deleteMany({});
+      await prisma.user.deleteMany({});
+      await prisma.$disconnect();
+    } catch {
+      // ignore cleanup errors on disconnected DB
+    }
   });
 
   beforeEach(async () => {
