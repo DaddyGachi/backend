@@ -13,6 +13,7 @@ let payoutService: PayoutService;
 let testUserId: string;
 let testCreatorId: string;
 let testCreatorUserId: string;
+let isDbAvailable = false;
 
 const isDbAvailable = Boolean(process.env.DATABASE_URL);
 
@@ -43,7 +44,11 @@ describe.skipIf(!isDbAvailable)('Tip Flow Integration Tests', () => {
     }
   });
 
-  beforeEach(async () => {
+  beforeEach(async (ctx) => {
+    if (!isDbAvailable) {
+      ctx.skip();
+      return;
+    }
     // Create test users
     const fanUser = await prisma.user.create({
       data: {

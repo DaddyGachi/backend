@@ -11,6 +11,7 @@
     "type-check": "tsc --noEmit",
     "start": "node dist/index.js",
     "lint": "eslint src --ext .ts",
+    "type-check": "tsc --noEmit",
     "format": "prettier --write src",
     "test": "vitest run",
     "test:run": "vitest run",
@@ -37,6 +38,8 @@
     "axios": "^1.7.2",
     "bullmq": "^5.8.0",
     "redis": "^4.6.13",
+    "generic-pool": "^3.8.2",
+    "lru-cache": "^10.4.0",
     "prom-client": "^15.1.0"
   },
   "devDependencies": {
