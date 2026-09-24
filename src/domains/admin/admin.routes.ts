@@ -222,7 +222,11 @@ export const registerAdminRoutes = (app: FastifyInstance, prisma: PrismaClient):
         const user = request.user;
         if (!user) throw new Error('User not found');
 
-        const result = await adminService.getModerationQueue();
+        const query = request.query as { page?: string; pageSize?: string; limit?: string };
+        const page = query?.page ? parseInt(query.page) : 1;
+        const pageSize = query?.pageSize ? parseInt(query.pageSize) : query?.limit ? parseInt(query.limit) : 20;
+
+        const result = await adminService.getModerationQueue(page, pageSize);
         reply.send(formatSuccess(result));
       } catch (error) {
         if (error instanceof UnauthorizedError) {

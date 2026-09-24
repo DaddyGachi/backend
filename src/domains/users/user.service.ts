@@ -109,9 +109,11 @@ export class UserService extends BaseService {
   async getUserTransactionHistory(
     userId: string,
     page: number = 1,
-    pageSize: number = 10
+    pageSize: number = 20
   ): Promise<PaginatedTransactions> {
     return this.executeWithLogging('user.getTransactionHistory', async () => {
+      const { sanitizePageNumber, sanitizePageSize } = await import('../../utils/pagination');
+
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
       });
@@ -120,7 +122,9 @@ export class UserService extends BaseService {
         throw new NotFoundError('User');
       }
 
-      const skip = (page - 1) * pageSize;
+      const safePage = sanitizePageNumber(page);
+      const safePageSize = sanitizePageSize(pageSize, 20);
+      const skip = (safePage - 1) * safePageSize;
 
       const [tips, total] = await Promise.all([
         this.prisma.tip.findMany({
@@ -136,7 +140,7 @@ export class UserService extends BaseService {
             },
           },
           skip,
-          take: pageSize,
+          take: safePageSize,
           orderBy: {
             createdAt: 'desc',
           },
@@ -158,11 +162,18 @@ export class UserService extends BaseService {
         createdAt: tip.createdAt.toISOString(),
       }));
 
+      const totalPages = Math.ceil(total / safePageSize);
+
       return {
         transactions,
+        items: transactions,
+        data: transactions,
         total,
-        page,
-        pageSize,
+        page: safePage,
+        pageSize: safePageSize,
+        totalPages,
+        hasNext: safePage < totalPages,
+        hasPrev: safePage > 1,
       };
     });
   }
