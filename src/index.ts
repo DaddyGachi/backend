@@ -12,6 +12,8 @@ import { registerWebhookRoutes } from './domains/webhooks/webhook.routes';
 import { registerAnalyticsRoutes } from './domains/analytics/analytics.routes';
 import { registerAdminRoutes } from './domains/admin/admin.routes';
 import { registerMetricsRoute } from './routes/metrics.routes';
+import redisPool, { startRedisHealthCheck } from './lib/redisPool';
+import cache from './lib/cache';
 
 const app = Fastify({
   logger: {
@@ -68,6 +70,9 @@ app.get('/health', async (_request, _reply) => {
         status: dbStatus,
         latency: dbLatency > 0 ? `${dbLatency}ms` : 'unknown',
       },
+      redis: {
+        status: (redisPool && (redisPool.size ?? 0) > 0) ? 'healthy' : 'degraded',
+      },
       memory: {
         status: 'healthy',
         usage: `${Math.round((process.memoryUsage().heapUsed / process.memoryUsage().heapTotal) * 100)}%`,
@@ -101,6 +106,7 @@ app.setErrorHandler(async (error, _request: FastifyRequest, reply: FastifyReply)
 
 const start = async (): Promise<void> => {
   try {
+    startRedisHealthCheck();
     await app.listen({ port: config.PORT, host: '0.0.0.0' });
     app.log.info(`Server listening on http://0.0.0.0:${config.PORT}`);
   } catch (err) {
