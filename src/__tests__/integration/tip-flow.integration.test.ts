@@ -13,7 +13,6 @@ let payoutService: PayoutService;
 let testUserId: string;
 let testCreatorId: string;
 let testCreatorUserId: string;
-let isDbAvailable = false;
 
 const isDbAvailable = Boolean(process.env.DATABASE_URL);
 
@@ -45,7 +44,7 @@ describe.skipIf(!isDbAvailable)('Tip Flow Integration Tests', () => {
   });
 
   beforeEach(async (ctx) => {
-    if (!isDbAvailable) {
+    if (!isDbAvailable || !prisma) {
       ctx.skip();
       return;
     }

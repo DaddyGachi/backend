@@ -1,5 +1,6 @@
 import Fastify, { FastifyReply, FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
+import cookie from '@fastify/cookie';
 import { config } from './config/env';
 import { AppError } from './utils/errors';
 import { PrismaClient } from '@prisma/client';
@@ -14,8 +15,8 @@ import { registerAnalyticsRoutes } from './domains/analytics/analytics.routes';
 import { registerAdminRoutes } from './domains/admin/admin.routes';
 import { registerMetricsRoute } from './routes/metrics.routes';
 import redisPool, { startRedisHealthCheck } from './lib/redisPool';
-import cache from './lib/cache/index';
-import { initializeCacheWarming } from './lib/cache/cache-warming';
+import cache from './lib/cache';
+import { setServiceState } from './services/health.service';
 
 const app = Fastify({
   logger: {
@@ -31,6 +32,7 @@ app.register(cors, {
   origin: true,
   credentials: true,
 });
+app.register(cookie);
 
 // Register routes
 registerAuthRoutes(app, prisma);
